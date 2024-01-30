@@ -1,0 +1,21 @@
+{
+    "name": "Title of school report",
+    "subjects": [
+        {
+            "name": "Name of the subject",
+            "coefficient": 1,
+            "exams": [
+                {
+                    "name": "Name of the first exam",
+                    "coefficient": 0.5,
+                    "grade": 10
+                },
+                {
+                    "name": "Name of the second exam",
+                    "coefficient": 0.5,
+                    "grade": 10
+                }
+            ]
+        }
+    ]
+}
