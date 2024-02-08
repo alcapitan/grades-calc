@@ -1,7 +1,16 @@
-import json
+#!/bin/python
 
-def read_json_file(file_path):
-    with open(file_path, 'r') as file:
+import sys, os, json
+
+def find_data_file():
+    for param in sys.argv:
+        if param.endswith(".json"):
+            return param
+
+def read_json_file(filename):
+    if not os.path.isfile(filename):
+        return None
+    with open(filename, 'r') as file:
         return json.load(file)
 
 def average(list):
@@ -20,8 +29,7 @@ def print_grades(name, coefficient, grade, indent=0):
     print(f"{name}: {grade} ({coefficient})")
 
 
-def run(filename):
-    data = read_json_file(filename)
+def list_grades(data):
     report = []
     for subject in data["subjects"]:
         grade_subject = average(subject["exams"])
@@ -35,4 +43,12 @@ def run(filename):
     print(f"Overall grade: {average(report)}")
 
 if __name__ == "__main__":
-    run("model.json")
+    data_file = find_data_file()
+    if data_file is None:
+        print("ERROR: No JSON file passed as argument")
+    else:
+        data = read_json_file(data_file)
+        if data is None:
+            print("ERROR: JSON file doesn't exist")
+        else:
+            list_grades(data)
