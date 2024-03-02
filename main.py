@@ -1,81 +1,82 @@
 #!/bin/python
 
-import sys, os, json
+"""Entry executable"""
 
-def find_data_file():
-    for param in sys.argv:
-        if param.endswith(".json"):
-            return param
+import sys
+from help import help_needed, trigger_help
+from file import find_data_filename, read_json_file
+from grades import average_grade, is_period_validated
 
-def read_json_file(filename):
-    if not os.path.isfile(filename):
-        return None
-    with open(filename, 'r') as file:
-        return json.load(file)
-
-def average(list):
-    sum = coef = result = 0
-    for exam in list:
-        coef += exam["coefficient"]
-        sum += exam["grade"] * exam["coefficient"]
-
-    if coef != 0:
-        result = sum / coef
-        result = round(result, 2)
-    return result
-
-def is_subject_validated(average):
-    return average >= 10
-
-def is_global_validated(report):
+def calculate_grades(report):
+    """
+    Enrich the data with average grade and validation status of each subject.
+    """
     for subject in report:
-        if not subject["validation"]:
-            return False
-    return True
-
-def print_grades(name, coefficient, grade, check_validation=False, indent=0):
-    print("  " * indent, end="")
-    print(f"{name}: {grade} ({coefficient}) ", end="")
-    if check_validation:
-        validation = is_subject_validated(grade)
-        if validation: print("\033[92m" + "✔" + "\033[0m")
-        else: print("\033[91m" + "✘" + "\033[0m")
-    else: print()
+        subject["grade"] = average_grade(subject["exams"])
+        subject["validated"] = subject["grade"] >= 10
+    return report
 
 
 def list_grades(data):
-    report = []
+    """
+    Print the content from the enriched data.
+    """
+    print(f"\033[1m{data['name']}\033[0m") # Title of the period in bold
+
     for subject in data["subjects"]:
-        grade_subject = average(subject["exams"])
-        report.append({
-            "grade": grade_subject,
-            "coefficient": subject["coefficient"],
-            "validation": is_subject_validated(grade_subject)
-        })
-        print_grades(subject["name"], subject["coefficient"], grade_subject, check_validation=True)
+        # Subject header line
+        print(f"{subject['name']}: {subject['grade']} ({subject['coefficient']}) ", end="")
+        if subject["validated"]:
+            print("\033[92m" + "✔" + "\033[0m")
+        else:
+            print("\033[91m" + "✘" + "\033[0m")
+
+        # Exams lines
         for exam in subject["exams"]:
-            print_grades(exam["name"], exam["coefficient"], exam["grade"], indent=1)
-    overall_grade = average(report)
-    overall_validation = is_global_validated(report)
-    is_compensation = False
-    if not overall_validation and overall_grade >= 10:
-        overall_validation = True
-        is_compensation = True
-    print(f"Overall grade: {overall_grade}", end="")
-    if overall_validation:
-        print(" \033[92m✔\033[0m", end="")
-        if is_compensation:
-            print(" (with compensation)")
-        else: print()
-    else: print(" \033[91m✘\033[0m")
+            print(f"└ {exam['name']}: {exam['grade']} ({exam['coefficient']})")
+
+    # Overall line
+    period_validation_status = is_period_validated(data["subjects"])
+    print(f"\033[1mOverall grade: {average_grade(data['subjects'])} ", end="")
+    if period_validation_status == 0:
+        print("\033[92m" + "✔" + "\033[0m")
+    elif period_validation_status == 1:
+        print("\033[92m" + "✔ (with compensation)" + "\033[0m")
+    else:
+        print("\033[91m" + "✘" + "\033[0m")
+
+def print_error(message):
+    """
+    Print a red error message and exit the program.
+    """
+    print(f"\033[91mERROR: {message}\033[0m") # Print the error message in red
+    sys.exit(0) # Exit the program
+
+def run():
+    """
+    Entry function.
+    """
+
+    # If there is no argument or -h / --help passed in arguments
+    if len(sys.argv) == 1 or help_needed():
+        trigger_help() # Print help
+        sys.exit(0) # Exit the program
+
+    # Get the JSON filename from the arguments
+    data_filename = find_data_filename()
+    if data_filename is None:
+        print_error("No JSON file passed as argument !")
+
+    # Get the data from the JSON file
+    data = read_json_file(data_filename)
+    if data is None:
+        print_error("JSON file passed as argument doesn't exist !")
+
+    # Calculate the grades from the JSON data
+    data["subjects"] = calculate_grades(data["subjects"])
+
+    # List the grades from the JSON data
+    list_grades(data)
 
 if __name__ == "__main__":
-    data_file = find_data_file()
-    if data_file is None:
-        print("ERROR: No JSON file passed as argument")
-    else:
-        data = read_json_file(data_file)
-        if data is None:
-            print("ERROR: JSON file doesn't exist")
-        else:
-            list_grades(data)
+    run()

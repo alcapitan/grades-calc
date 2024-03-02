@@ -1,19 +1,35 @@
 {
-    "name": "Title of school report",
+    "name": "Name of a school period",
     "subjects": [
         {
-            "name": "Name of the subject",
+            "name": "Name of the first subject",
             "coefficient": 1,
             "exams": [
                 {
                     "name": "Name of the first exam",
                     "coefficient": 0.5,
-                    "grade": 10
+                    "grade": 8
                 },
                 {
                     "name": "Name of the second exam",
-                    "coefficient": 0.5,
+                    "coefficient": 1,
                     "grade": 10
+                }
+            ]
+        },
+        {
+            "name": "Name of the second subject",
+            "coefficient": 2,
+            "exams": [
+                {
+                    "name": "Name of the first exam",
+                    "coefficient": 1,
+                    "grade": 11
+                },
+                {
+                    "name": "Name of the second exam",
+                    "coefficient": 3,
+                    "grade": 13
                 }
             ]
         }
